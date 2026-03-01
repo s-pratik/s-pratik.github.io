@@ -1,0 +1,561 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Pratik Sharma</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Montserrat:wght@200;300&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      *,
+      *::before,
+      *::after {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        width: 100%;
+        height: 100%;
+        background: #000;
+        overflow: hidden;
+      }
+      body {
+        color: #fff;
+        font-family: "Montserrat", sans-serif;
+        cursor: none;
+      }
+
+      #cur {
+        position: fixed;
+        width: 10px;
+        height: 10px;
+        background: #7cff72;
+        border-radius: 50%;
+        pointer-events: none;
+        z-index: 9999;
+        transform: translate(-50%, -50%);
+        box-shadow:
+          0 0 14px #7cff72,
+          0 0 28px rgba(124, 255, 114, 0.4);
+      }
+
+      /* SPLASH */
+      #splash {
+        position: fixed;
+        inset: 0;
+        z-index: 200;
+        background: #000;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+      }
+      .mark {
+        position: relative;
+        width: 48px;
+        height: 48px;
+        opacity: 0;
+      }
+      .mark svg {
+        width: 100%;
+        height: 100%;
+      }
+      .mark circle {
+        stroke: #fff;
+        stroke-width: 1;
+        fill: none;
+        stroke-dasharray: 151;
+        stroke-dashoffset: 151;
+        transition: stroke-dashoffset 1s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+      .mark line {
+        stroke: rgba(255, 255, 255, 0.35);
+        stroke-width: 0.5;
+        opacity: 0;
+        transition: opacity 0.5s ease;
+      }
+      .splash-role {
+        font-weight: 300;
+        font-size: clamp(0.9rem, 2vw, 1.1rem);
+        letter-spacing: 0.55em;
+        text-transform: uppercase;
+        color: rgba(255, 255, 255, 0.35);
+        margin-top: 22px;
+        opacity: 0;
+        transform: translateY(8px);
+      }
+      .splash-hint {
+        position: absolute;
+        bottom: 40px;
+        left: 50%;
+        transform: translateX(-50%);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 10px;
+        opacity: 0;
+        pointer-events: none;
+      }
+      .splash-hint span {
+        font-size: 11px;
+        letter-spacing: 0.5em;
+        text-transform: uppercase;
+        color: rgba(255, 255, 255, 0.35);
+      }
+      .splash-arrow {
+        width: 12px;
+        height: 12px;
+        border-right: 1px solid rgba(255, 255, 255, 0.3);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+        transform: rotate(45deg);
+        animation: bob 1.8s ease-in-out infinite;
+      }
+      @keyframes bob {
+        0%,
+        100% {
+          opacity: 0.3;
+          transform: rotate(45deg) translateY(0);
+        }
+        50% {
+          opacity: 0.8;
+          transform: rotate(45deg) translateY(5px);
+        }
+      }
+      #splash.exit {
+        animation: splashOut 0.85s cubic-bezier(0.76, 0, 0.24, 1) forwards;
+      }
+      @keyframes splashOut {
+        to {
+          opacity: 0;
+        }
+      }
+
+      /* INTRO */
+      #intro {
+        position: fixed;
+        inset: 0;
+        z-index: 100;
+        background: #000;
+        overflow: hidden;
+        opacity: 0;
+        transition: opacity 0.5s ease;
+      }
+      #intro.visible {
+        opacity: 1;
+      }
+      #intro.exit {
+        animation: introOut 0.95s cubic-bezier(0.7, 0, 0.3, 1) forwards;
+      }
+      @keyframes introOut {
+        0% {
+          opacity: 1;
+          transform: scale(1);
+        }
+        100% {
+          opacity: 0;
+          transform: scale(1.05);
+        }
+      }
+      #canvas {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+      }
+
+      /* Thin green buffer bar — only shows if user scrolls before priority ready */
+      #buffer {
+        position: fixed;
+        top: 0;
+        left: 0;
+        height: 2px;
+        width: 0%;
+        z-index: 400;
+        pointer-events: none;
+        background: #7cff72;
+        transition: width 0.1s linear;
+        display: none;
+      }
+
+      #progress {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        height: 1.5px;
+        width: 0%;
+        background: rgba(255, 255, 255, 0.6);
+        z-index: 300;
+        pointer-events: none;
+      }
+      #hint {
+        position: fixed;
+        bottom: 36px;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 300;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 8px;
+        opacity: 0;
+        transition: opacity 0.5s;
+        pointer-events: none;
+      }
+      #hint span {
+        font-size: 9px;
+        letter-spacing: 0.5em;
+        text-transform: uppercase;
+        color: rgba(255, 255, 255, 0.4);
+      }
+      .hint-arrow {
+        width: 12px;
+        height: 12px;
+        border-right: 1px solid rgba(255, 255, 255, 0.3);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+        transform: rotate(45deg);
+        animation: bob 1.6s ease-in-out infinite;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="cur"></div>
+
+    <div id="splash">
+      <div class="mark" id="mark">
+        <svg viewBox="0 0 48 48">
+          <circle cx="24" cy="24" r="22" />
+          <line x1="24" y1="4" x2="24" y2="44" />
+          <line x1="4" y1="24" x2="44" y2="24" />
+        </svg>
+      </div>
+      <p class="splash-role" id="splash-role">Welcome</p>
+      <div class="splash-hint" id="splash-hint">
+        <span>Scroll to begin</span>
+        <div class="splash-arrow"></div>
+      </div>
+    </div>
+
+    <div id="intro"><canvas id="canvas"></canvas></div>
+    <div id="buffer"></div>
+    <div id="progress"></div>
+    <div id="hint">
+      <span>Scroll</span>
+      <div class="hint-arrow"></div>
+    </div>
+
+    <script>
+      // ── Config — adjust if you rename files or folders ──────────────────────
+      const TOTAL_FRAMES = 426;
+      const RATIO = 1920 / 1000; // frame aspect ratio (width / height)
+      const FRAMES_DIR = "frames/"; // folder with frame images
+      const FRAME_PREFIX = "frame_";
+      const FRAME_EXT = ".jpg";
+      const PRIORITY = 60; // fetch first N frames before revealing intro
+      const CONCURRENCY = 12; // parallel HTTP requests (HTTP/2 handles well)
+
+      function frameUrl(i) {
+        return (
+          FRAMES_DIR + FRAME_PREFIX + String(i + 1).padStart(4, "0") + FRAME_EXT
+        );
+      }
+
+      // ── DOM ─────────────────────────────────────────────────────────────────
+      const canvas = document.getElementById("canvas");
+      const ctx = canvas.getContext("2d", { alpha: false });
+      const splash = document.getElementById("splash");
+      const intro = document.getElementById("intro");
+      const hint = document.getElementById("hint");
+      const progEl = document.getElementById("progress");
+      const bufEl = document.getElementById("buffer");
+
+      // ── Cursor ───────────────────────────────────────────────────────────────
+      const cur = document.getElementById("cur");
+      document.addEventListener("mousemove", (e) => {
+        cur.style.left = e.clientX + "px";
+        cur.style.top = e.clientY + "px";
+      });
+
+      // ── Canvas sizing ────────────────────────────────────────────────────────
+      let dpr = 1,
+        logW = 0,
+        logH = 0,
+        currentFrame = 0;
+      function resize() {
+        dpr = Math.min(window.devicePixelRatio || 1, 2);
+        const vw = window.innerWidth,
+          vh = window.innerHeight;
+        if (vw / vh >= RATIO) {
+          logW = vw;
+          logH = vw / RATIO;
+        } else {
+          logH = vh;
+          logW = vh * RATIO;
+        }
+        canvas.width = Math.round(logW * dpr);
+        canvas.height = Math.round(logH * dpr);
+        canvas.style.width = logW + "px";
+        canvas.style.height = logH + "px";
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        drawFrame(currentFrame);
+      }
+      window.addEventListener("resize", resize);
+
+      function drawFrame(idx) {
+        const img = imgs[idx];
+        if (!img || !img.complete || !img.naturalWidth) return;
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        ctx.drawImage(img, 0, 0, logW, logH);
+      }
+
+      // ── Frame store ──────────────────────────────────────────────────────────
+      const imgs = new Array(TOTAL_FRAMES);
+      let loadedCount = 0;
+      let priorityReady = false;
+      let onPriorityReadyCb = null;
+
+      function loadFrame(idx) {
+        return new Promise((resolve) => {
+          const img = new Image();
+          img.onload = () => {
+            imgs[idx] = img;
+            loadedCount++;
+            resolve();
+          };
+          img.onerror = () => {
+            loadedCount++;
+            resolve();
+          };
+          img.src = frameUrl(idx);
+        });
+      }
+
+      // Parallel loader with concurrency cap
+      async function loadRange(start, end, onEach) {
+        let i = start;
+        async function worker() {
+          while (i < end) {
+            const idx = i++;
+            await loadFrame(idx);
+            if (onEach) onEach();
+          }
+        }
+        const pool = [];
+        for (let w = 0; w < Math.min(CONCURRENCY, end - start); w++)
+          pool.push(worker());
+        await Promise.all(pool);
+      }
+
+      async function startLoading() {
+        // Phase 1: priority frames — user sees intro as soon as these are done
+        await loadRange(0, PRIORITY, () => {
+          const pct = Math.round(
+            (Math.min(loadedCount, PRIORITY) / PRIORITY) * 100,
+          );
+          bufEl.style.width = pct + "%";
+        });
+
+        priorityReady = true;
+        bufEl.style.display = "none";
+        if (onPriorityReadyCb) onPriorityReadyCb();
+
+        // Phase 2: rest silently in background while user scrolls through intro
+        await loadRange(PRIORITY, TOTAL_FRAMES);
+      }
+
+      // ── Splash ───────────────────────────────────────────────────────────────
+      let splashDone = false,
+        scrollLocked = true;
+
+      function animateSplash() {
+        const mark = document.getElementById("mark");
+        const circle = mark.querySelector("circle");
+        const lines = mark.querySelectorAll("line");
+        const role = document.getElementById("splash-role");
+        const shint = document.getElementById("splash-hint");
+        setTimeout(() => {
+          mark.style.transition = "opacity .5s ease";
+          mark.style.opacity = "1";
+        }, 150);
+        setTimeout(() => {
+          circle.style.strokeDashoffset = "0";
+        }, 300);
+        setTimeout(() => {
+          lines.forEach((l) => (l.style.opacity = "1"));
+        }, 900);
+        setTimeout(() => {
+          role.style.transition =
+            "opacity .8s ease, transform .8s cubic-bezier(0.2,0,0,1)";
+          role.style.opacity = "1";
+          role.style.transform = "translateY(0)";
+        }, 1100);
+        setTimeout(() => {
+          shint.style.transition = "opacity .8s ease";
+          shint.style.opacity = "1";
+          scrollLocked = false;
+        }, 1600);
+      }
+
+      function exitSplash() {
+        if (splashDone) return;
+        splashDone = true;
+        scrollLocked = true;
+        splash.classList.add("exit");
+        setTimeout(() => {
+          splash.style.display = "none";
+          if (priorityReady) {
+            showIntro();
+          } else {
+            // Very rare — show tiny top bar while last priority frames arrive
+            bufEl.style.display = "block";
+            onPriorityReadyCb = showIntro;
+          }
+        }, 650);
+      }
+
+      function showIntro() {
+        onPriorityReadyCb = null;
+        resize();
+        drawFrame(0);
+        intro.classList.add("visible");
+        hint.style.opacity = "1";
+        scrollLocked = false;
+        rafRunning = true;
+        requestAnimationFrame(loop);
+      }
+
+      // ── Input ────────────────────────────────────────────────────────────────
+      let targetFrame = 0,
+        smoothFrame = 0,
+        introDone = false;
+      const PX_PER_FRAME = 5;
+      const totalScroll = TOTAL_FRAMES * PX_PER_FRAME;
+      let accum = 0;
+
+      function advance(delta) {
+        if (scrollLocked || introDone) return;
+        if (!splashDone) {
+          exitSplash();
+          return;
+        }
+        accum = Math.max(0, Math.min(totalScroll, accum + delta));
+        targetFrame = (accum / totalScroll) * (TOTAL_FRAMES - 1);
+        hint.style.opacity = accum > PX_PER_FRAME * 4 ? "0" : "1";
+        progEl.style.width = (accum / totalScroll) * 100 + "%";
+      }
+
+      window.addEventListener(
+        "wheel",
+        (e) => {
+          e.preventDefault();
+          if (scrollLocked) return;
+          if (!splashDone) {
+            exitSplash();
+            return;
+          }
+          advance(e.deltaY);
+        },
+        { passive: false },
+      );
+
+      let touchY = null;
+      window.addEventListener(
+        "touchstart",
+        (e) => {
+          touchY = e.touches[0].clientY;
+        },
+        { passive: true },
+      );
+      window.addEventListener(
+        "touchmove",
+        (e) => {
+          if (scrollLocked || touchY === null) return;
+          e.preventDefault();
+          if (!splashDone) {
+            exitSplash();
+            return;
+          }
+          advance((touchY - e.touches[0].clientY) * 2.5);
+          touchY = e.touches[0].clientY;
+        },
+        { passive: false },
+      );
+
+      window.addEventListener("keydown", (e) => {
+        if (scrollLocked) return;
+        if (
+          !splashDone &&
+          (e.key === "ArrowDown" || e.key === " " || e.key === "ArrowUp")
+        ) {
+          exitSplash();
+          e.preventDefault();
+          return;
+        }
+        const s = PX_PER_FRAME * 6;
+        if (e.key === "ArrowDown" || e.key === " ") {
+          advance(s);
+          e.preventDefault();
+        }
+        if (e.key === "ArrowUp") advance(-s);
+      });
+
+      // ── Transition ───────────────────────────────────────────────────────────
+      function triggerTransition() {
+        if (introDone) return;
+        introDone = true;
+        rafRunning = false;
+        intro.classList.add("exit");
+        hint.style.opacity = "0";
+        progEl.style.opacity = "0";
+        setTimeout(() => {
+          window.location.href = "portfolio.html";
+        }, 900);
+      }
+
+      // ── RAF loop with safe fallback for unloaded frames ──────────────────────
+      let lastIdx = -1,
+        rafRunning = false;
+      function loop() {
+        if (!rafRunning) return;
+        smoothFrame += (targetFrame - smoothFrame) * 0.13;
+        const idx = Math.max(
+          0,
+          Math.min(TOTAL_FRAMES - 1, Math.round(smoothFrame)),
+        );
+        if (idx !== lastIdx) {
+          let safeIdx = idx;
+          if (!imgs[idx] || !imgs[idx].naturalWidth) {
+            for (let d = 1; d <= 60; d++) {
+              const b = idx - d;
+              if (b >= 0 && imgs[b] && imgs[b].naturalWidth) {
+                safeIdx = b;
+                break;
+              }
+            }
+          }
+          lastIdx = idx;
+          currentFrame = safeIdx;
+          drawFrame(safeIdx);
+        }
+        if (
+          targetFrame >= TOTAL_FRAMES - 1 &&
+          Math.abs(smoothFrame - (TOTAL_FRAMES - 1)) < 0.8
+        ) {
+          triggerTransition();
+          return;
+        }
+        requestAnimationFrame(loop);
+      }
+
+      // ── Init ─────────────────────────────────────────────────────────────────
+      resize();
+      animateSplash();
+      startLoading(); // fetches begin immediately in background during splash
+    </script>
+  </body>
+</html>
